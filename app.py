@@ -79,5 +79,12 @@ app.layout = html.Div(children=[
 def display_click_data(clickData):
     return json.dumps(clickData, indent=2)
 
+# @app.callback(
+#     Output('wordCloud', 'figure'),
+#     [Input('pie-graph', 'clickData')])
+# def display_click_data(clickData):
+
+#     return get_word_cloud(" ".join(df.text.str.split(expand=True).stack()))
+
 if __name__ == '__main__':
     app.run_server(debug=True)
