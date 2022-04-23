@@ -1,0 +1,7 @@
+body {
+  scroll-behavior: smooth;
+  text-rendering: optimizeSpeed;
+  font-family: "Roboto Mono", monospace;
+  font-weight: bold;
+  -webkit-font-smoothing: antialiased;
+}
