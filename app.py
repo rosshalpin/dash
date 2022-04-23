@@ -29,11 +29,11 @@ def get_pie_chart(df):
     return pie_fig
 
 
-def get_word_cloud(text):
+def get_word_cloud(text, title="mixed"):
     fig = px.imshow(WordCloud(max_words=50,
         background_color="white",
         scale=3
-        ).generate(text),title="Input Data Word Cloud")
+        ).generate(text),title=f"Word Cloud for sentiment: {title}")
     fig.update_layout(
         showlegend=False,
         font_family="monospace"
@@ -51,6 +51,9 @@ app.layout = html.Div(children=[
         Data Visualisation (DV) Common Module Assessment (CMA)
     '''),
 
+    html.Div(children='''
+        Clicking on the pie chart will update the word cloud for the top 50 words in that sentiment
+    '''),
 
     dcc.Graph(
         id='pie-graph',
@@ -79,12 +82,21 @@ app.layout = html.Div(children=[
 def display_click_data(clickData):
     return json.dumps(clickData, indent=2)
 
-# @app.callback(
-#     Output('wordCloud', 'figure'),
-#     [Input('pie-graph', 'clickData')])
-# def display_click_data(clickData):
 
-#     return get_word_cloud(" ".join(df.text.str.split(expand=True).stack()))
+@app.callback(
+    Output('wordCloud', 'figure'),
+    [Input('pie-graph', 'clickData')])
+def display_click_data(clickData):
+    try:
+        sentiment = clickData["points"][0]["label"]
+    except:
+        sentiment = None
+    if sentiment != None:
+        df_sent = df.query(f'sentiment == "{sentiment}"')
+        words = " ".join(df_sent.text.str.split(expand=True).stack())
+        return get_word_cloud(words, title=sentiment)
+    return get_word_cloud(" ".join(df.text.str.split(expand=True).stack()))
+    
 
 if __name__ == '__main__':
     app.run_server(debug=True)
