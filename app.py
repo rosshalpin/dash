@@ -2,11 +2,13 @@
 # visit http://127.0.0.1:8050/ in your web browser.
 
 from dash import Dash, html, dcc
-import dash_bootstrap_components as dbc
+# import dash_bootstrap_components as dbc
 import plotly.express as px
 import os
 import pandas as pd
 from wordcloud import WordCloud
+from dash.dependencies import Input, Output
+import json
 
 app = Dash(__name__)
 
@@ -41,6 +43,7 @@ def get_word_cloud(text):
     
     return fig
 
+
 app.layout = html.Div(children=[
     html.H1(children='Twitter data dashboard'),
 
@@ -50,17 +53,31 @@ app.layout = html.Div(children=[
 
 
     dcc.Graph(
-        id='example-graph',
+        id='pie-graph',
         figure=get_pie_chart(df),
-        style={'width': '10md', 'height': '30md',"display": "inline-block","margin-left": "10"}
+        style={'width': '10md', 'height': '30md',"display": "inline-block","marginLeft": "10"}
     ),
 
     dcc.Graph(
         id="wordCloud",
         figure=get_word_cloud(" ".join(df.text.str.split(expand=True).stack())),
-        style={"display": "inline-block","margin-left": "10"}
-    )
+        style={"display": "inline-block","marginLeft": "10"}
+    ),
+    html.Div([
+        dcc.Markdown(("""
+            **Click Data**
+
+            Click on points in the graph.
+        """)),
+        html.Pre(id='click-data'),
+    ], className='three columns'), 
 ])
+
+@app.callback(
+    Output('click-data', 'children'),
+    [Input('pie-graph', 'clickData')])
+def display_click_data(clickData):
+    return json.dumps(clickData, indent=2)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
