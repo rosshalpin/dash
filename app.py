@@ -95,7 +95,7 @@ def get_geo_plot(df):
             color_discrete_map={'negative':'orangered',
                                  'positive':'limegreen',
                                  'neutral':'blue'},
-            height=600,
+            width=800
         )
     fig.update_layout(
         font_family="monospace"
@@ -214,14 +214,14 @@ app.layout = html.Div(children=[
     html.Br(),
 
     dbc.Row([
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardBody([
-                        dcc.Graph(
+        dbc.Col(
+            dbc.Card(
+                 dbc.CardBody([
+                    dcc.Graph(
                             id='pie-graph',
                             figure=get_pie_chart(df),
-                        ),
-                    ])
+                    ),
+                ])
             ),width=5),
             dbc.Col(
                 dbc.Card(
@@ -237,54 +237,107 @@ app.layout = html.Div(children=[
     ),
 
     html.Br(),
-    html.Div([
-        dcc.Graph(
-            id="geoPlot",
-            figure=get_geo_plot(df),
-        ),
-    ]),
+
+    dbc.Row([
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody([
+                    dcc.Graph(
+                        id="geoPlot",
+                        figure=get_geo_plot(df),
+                    ),
+                ])
+            ),width=8)
+        ],
+        justify="center",
+    ),
+
     html.Br(),
-    html.Div([
-        dcc.Graph(
-            id='temporal',
-            figure=get_temporal_data(df),
-        ),
-    ]),
+
+
+    dbc.Row([
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody([
+                    dcc.Graph(
+                        id='temporal',
+                        figure=get_temporal_data(df),
+                    ),
+                ])
+            ),width=10
+        )],
+        justify="center",
+    ),
+
     html.Br(),
     html.H3(children='SVM Performance'),
     html.Br(),
-    html.Div([
-        dcc.Graph(
-            id='svm-lc',
-            figure=get_svm_lc(svm_lc),
-            style={'width': '33vw',"display": "inline-block"}
-        ),
-        dcc.Graph(
-            id='svm_cm',
-            figure=get_confusion_matrix(svm, "SVM Confusion Matrix"),
-            style={'width': '33vw',"display": "inline-block"}
-        ),
-    ]),
+
+    dbc.Row(
+        [
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='svm-lc',
+                            figure=get_svm_lc(svm_lc),
+                        ),
+                    ])
+                ),width=4
+            ),
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='svm_cm',
+                            figure=get_confusion_matrix(svm, "SVM Confusion Matrix"),
+                        ),
+                    ])
+                ),width=4
+            ),
+        ],
+        justify="center",
+    ),
+
     html.Br(),
     html.H3(children='DNN Performance'),
     html.Br(),
-    html.Div([
-        dcc.Graph(
-            id='dnn-acc',
-            figure=get_dnn_acc(dnn_history),
-            style={'width': '33vw',"display": "inline-block"}
+
+    dbc.Row([
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody([
+                    dcc.Graph(
+                        id='dnn-acc',
+                        figure=get_dnn_acc(dnn_history),
+                    ),
+                ])
+            ),
         ),
-        dcc.Graph(
-            id='dnn-loss',
-            figure=get_dnn_loss(dnn_history),
-            style={'width': '33vw',"display": "inline-block"}
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody([
+                    dcc.Graph(
+                        id='dnn-loss',
+                        figure=get_dnn_loss(dnn_history),
+                    ),
+                ])
+            ),
         ),
-        dcc.Graph(
-            id='dnn_cm',
-            figure=get_confusion_matrix(dnn, "DNN Confusion Matrix"),
-            style={'width': '33vw',"display": "inline-block"}
+        dbc.Col(
+            dbc.Card(
+                dbc.CardBody([
+                    dcc.Graph(
+                        id='dnn_cm',
+                        figure=get_confusion_matrix(dnn, "DNN Confusion Matrix"),
+                    ),
+                ])
+            ),
         ),
-    ]),
+        ],
+        justify="center",
+    ),
+
     html.Div([
         dcc.Markdown(("""
             **Click Data**
