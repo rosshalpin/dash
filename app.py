@@ -100,7 +100,7 @@ def get_geo_plot(df):
     return fig
 
 
-def get_confusion_matrix(data):
+def get_confusion_matrix(data, title):
     y_test, y_pred = data
     cm = confusion_matrix(y_test, y_pred)
     x = ["negative", "neutral", "positive"]
@@ -127,7 +127,7 @@ def get_confusion_matrix(data):
     fig.update_layout(
         margin=dict(t=100, l=100),
         font_family="monospace",
-        title="SVM Confusion Matrix"
+        title=title
     )
     return fig
 
@@ -183,6 +183,18 @@ def get_dnn_loss(data):
     fig.update_xaxes(title="epoch")
     return fig
 
+def get_temporal_data(df):
+    dates = pd.to_datetime(df.created_at, infer_datetime_format=True)
+    sents = df.sentiment.replace(['negative','neutral','positive'], [-1, 0, 1])
+    date_df = pd.DataFrame(zip(dates,sents), columns=["date", "sentiment"])
+    group_df = date_df.groupby(pd.Grouper(key='date', freq='H')).mean()
+    group_df.dropna(inplace=True)
+    fig = px.area(group_df, x=group_df.index, y="sentiment",width=1600, title='Hourly Mean Sentiment (Positive=1, Neutral=0, Negative=-1)')
+    fig.update_yaxes(title="mean sentiment")
+    fig.update_layout(
+        font_family="monospace"
+    )
+    return fig
 
 app.layout = html.Div(children=[
     html.H1(children='Twitter data dashboard'),
@@ -217,6 +229,13 @@ app.layout = html.Div(children=[
         ),
     ]),
     html.Br(),
+    html.Div([
+        dcc.Graph(
+            id='temporal',
+            figure=get_temporal_data(df),
+        ),
+    ]),
+    html.Br(),
     html.H3(children='SVM Performance'),
     html.Br(),
     html.Div([
@@ -227,10 +246,12 @@ app.layout = html.Div(children=[
         ),
         dcc.Graph(
             id='svm_cm',
-            figure=get_confusion_matrix(svm),
+            figure=get_confusion_matrix(svm, "SVM Confusion Matrix"),
             style={'width': '33vw',"display": "inline-block"}
         ),
     ]),
+    html.Br(),
+    html.H3(children='DNN Performance'),
     html.Br(),
     html.Div([
         dcc.Graph(
@@ -241,6 +262,11 @@ app.layout = html.Div(children=[
         dcc.Graph(
             id='dnn-loss',
             figure=get_dnn_loss(dnn_history),
+            style={'width': '33vw',"display": "inline-block"}
+        ),
+        dcc.Graph(
+            id='dnn_cm',
+            figure=get_confusion_matrix(dnn, "DNN Confusion Matrix"),
             style={'width': '33vw',"display": "inline-block"}
         ),
     ]),
