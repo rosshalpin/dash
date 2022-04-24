@@ -211,12 +211,58 @@ def get_temporal_data(df):
     return fig
 
 
-def get_radar_plot(sents):
-    sent_counts = sents.value_counts(normalize=True) * 100
+def get_bar_plot(data, range):
+    _, y_pred = data
+    sent_counts = (
+        pd.DataFrame(y_pred, columns=["sentiment"]).sentiment.value_counts(
+            normalize=True
+        )
+        * 100
+    )
     data = pd.DataFrame(
         zip(sent_counts.keys(), sent_counts.values), columns=["sentiment", "percentage"]
     )
-    fig = px.line_polar(data, r="percentage", theta="sentiment", line_close=True)
+    fig = px.bar(
+        data,
+        x="sentiment",
+        y="percentage",
+        color="sentiment",
+        color_discrete_map={
+            "negative": "orangered",
+            "positive": "limegreen",
+            "neutral": "blue",
+        },
+        title="SVM Predicted Sentiment Breakdown"
+    )
+    fig.update_yaxes(range=range)
+    fig.update_layout(font_family="monospace")
+    return fig
+
+def get_bar_plot_dnn(data, range):
+    _, y_pred = data
+    sent_counts = (
+         y_pred.value_counts(
+            normalize=True
+        )
+        * 100
+    )
+    data = pd.DataFrame(
+        zip(sent_counts.keys(), sent_counts.values), columns=["sentiment", "percentage"]
+    )
+    fig = px.bar(
+        data,
+        x="sentiment",
+        y="percentage",
+        color="sentiment",
+        color_discrete_map={
+            "negative": "orangered",
+            "positive": "limegreen",
+            "neutral": "blue",
+        },
+        title="DNN Predicted Sentiment Breakdown"
+    )
+    fig.update_yaxes(range=range)
+    fig.update_layout(font_family="monospace")
     return fig
 
 
@@ -235,10 +281,6 @@ app.layout = html.Div(
         html.Br(),
         html.H3(children="Input Data"),
         html.Br(),
-        # dcc.Graph(
-        #     id='radar',
-        #     figure=get_radar_plot(df.sentiment),
-        # ),
         dbc.Row(
             [
                 dbc.Col(
@@ -343,6 +385,19 @@ app.layout = html.Div(
                     ),
                     width=4,
                 ),
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                dcc.Graph(
+                                    id="svm_bar",
+                                    figure=get_bar_plot(svm, [25, 36]),
+                                ),
+                            ]
+                        )
+                    ),
+                    width=4,
+                ),
             ],
             justify="center",
         ),
@@ -388,6 +443,25 @@ app.layout = html.Div(
                             ]
                         )
                     ),
+                ),
+            ],
+            justify="center",
+        ),
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                dcc.Graph(
+                                    id="svm_bar_2",
+                                    figure=get_bar_plot_dnn(dnn, [25, 40]),
+                                ),
+                            ]
+                        )
+                    ),
+                    width=4,
                 ),
             ],
             justify="center",
