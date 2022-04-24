@@ -96,7 +96,6 @@ def get_geo_plot(df):
         lon="lon",
         color="sentiment",  # which column to use to set the color of markers
         hover_name="place",  # column added to hover information
-        projection="natural earth",
         title="Scatter Geo Plot of some tweet sentiments",
         color_discrete_map={
             "negative": "orangered",
@@ -211,6 +210,25 @@ def get_temporal_data(df):
     return fig
 
 
+def get_temporal_sum_data(df):
+    dates = pd.to_datetime(df.created_at, infer_datetime_format=True).to_numpy()
+    date_df = pd.DataFrame(dates, columns=["date"])
+    group_df = date_df.groupby(pd.Grouper(key="date", freq="H"))
+    group_df = group_df.size().reset_index(name="count")
+    group_df.dropna(inplace=True)
+    fig = px.histogram(
+        group_df,
+        x=group_df.date,
+        y="count",
+        width=1600,
+        title="Hourly Tweet Count",
+        nbins=int(group_df.size),
+    )
+    fig.update_yaxes(title="count")
+    fig.update_layout(font_family="monospace")
+    return fig
+
+
 def get_bar_plot(data, range):
     _, y_pred = data
     sent_counts = (
@@ -232,20 +250,16 @@ def get_bar_plot(data, range):
             "positive": "limegreen",
             "neutral": "blue",
         },
-        title="SVM Predicted Sentiment Breakdown"
+        title="SVM Predicted Sentiment Breakdown",
     )
     fig.update_yaxes(range=range)
     fig.update_layout(font_family="monospace")
     return fig
 
+
 def get_bar_plot_dnn(data, range):
     _, y_pred = data
-    sent_counts = (
-         y_pred.value_counts(
-            normalize=True
-        )
-        * 100
-    )
+    sent_counts = y_pred.value_counts(normalize=True) * 100
     data = pd.DataFrame(
         zip(sent_counts.keys(), sent_counts.values), columns=["sentiment", "percentage"]
     )
@@ -259,7 +273,7 @@ def get_bar_plot_dnn(data, range):
             "positive": "limegreen",
             "neutral": "blue",
         },
-        title="DNN Predicted Sentiment Breakdown"
+        title="DNN Predicted Sentiment Breakdown",
     )
     fig.update_yaxes(range=range)
     fig.update_layout(font_family="monospace")
@@ -343,6 +357,26 @@ app.layout = html.Div(
                                 dcc.Graph(
                                     id="temporal",
                                     figure=get_temporal_data(df),
+                                ),
+                            ]
+                        )
+                    ),
+                    width=10,
+                )
+            ],
+            justify="center",
+        ),
+        html.Br(),
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                dcc.Graph(
+                                    id="likes",
+                                    figure=get_temporal_sum_data(df),
                                 ),
                             ]
                         )
