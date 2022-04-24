@@ -96,15 +96,15 @@ def get_geo_plot(df):
         lon="lon",
         color="sentiment",  # which column to use to set the color of markers
         hover_name="place",  # column added to hover information
-        title="Scatter Geo Plot of some tweet sentiments",
+        title="Scatter Geo Plot of some tweet sentiments where available",
         color_discrete_map={
             "negative": "orangered",
             "positive": "limegreen",
             "neutral": "blue",
         },
-        width=800,
     )
     fig.update_layout(font_family="monospace")
+    fig.update_layout(height=600, margin={"r":0,"t":25,"l":0,"b":0})
     return fig
 
 
