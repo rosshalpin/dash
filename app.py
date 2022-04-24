@@ -3,7 +3,7 @@
 
 from dash import Dash, html, dcc
 import dash
-# import dash_bootstrap_components as dbc
+import dash_bootstrap_components as dbc
 import plotly.express as px
 import os
 import pandas as pd
@@ -15,7 +15,10 @@ from sklearn.metrics import confusion_matrix
 import numpy as np
 import plotly.figure_factory as ff
 
-app = Dash(__name__)
+
+external_stylesheets = [dbc.themes.BOOTSTRAP]
+
+app = Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 path = os.path.abspath(os.getcwd())
@@ -42,7 +45,6 @@ def get_pie_chart(df):
         names='sentiment', 
         title='Normalised Sentiment Breakdown<br>(click to obtain Sentiment Word Cloud)', 
         hole=.5, 
-        width=500,
         color='sentiment',
         color_discrete_map={'negative':'orangered',
                                  'positive':'limegreen',
@@ -93,6 +95,7 @@ def get_geo_plot(df):
             color_discrete_map={'negative':'orangered',
                                  'positive':'limegreen',
                                  'neutral':'blue'},
+            height=600,
         )
     fig.update_layout(
         font_family="monospace"
@@ -210,22 +213,34 @@ app.layout = html.Div(children=[
     html.H3(children='Input Data'),
     html.Br(),
 
-    html.Div([
-        dcc.Graph(
-            id='pie-graph',
-            figure=get_pie_chart(df),
-            style={'width': '33vw',"display": "inline-block"}
-        ),
+    dbc.Row([
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id='pie-graph',
+                            figure=get_pie_chart(df),
+                        ),
+                    ])
+            ),width=5),
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        dcc.Graph(
+                            id="wordCloud",
+                            figure=get_word_cloud(" ".join(df.text.str.split(expand=True).stack())),
+                        )
+                    ])
+            ),width=5),
+        ],
+        justify="center",
+    ),
 
-        dcc.Graph(
-            id="wordCloud",
-            figure=get_word_cloud(" ".join(df.text.str.split(expand=True).stack())),
-            style={'width': '33vw', "display": "inline-block"}
-        ),
+    html.Br(),
+    html.Div([
         dcc.Graph(
             id="geoPlot",
             figure=get_geo_plot(df),
-            style={'width': '33vw', "display": "inline-block"}
         ),
     ]),
     html.Br(),
