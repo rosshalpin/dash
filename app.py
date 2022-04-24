@@ -2,6 +2,7 @@
 # visit http://127.0.0.1:8050/ in your web browser.
 
 from dash import Dash, html, dcc
+import dash
 # import dash_bootstrap_components as dbc
 import plotly.express as px
 import os
@@ -22,7 +23,17 @@ df = pd.read_csv(data_path+"cleaned_tweets.csv")
 def get_pie_chart(df):
     sent_counts = df.sentiment.value_counts(normalize=True) * 100
     data = pd.DataFrame(zip(sent_counts.keys(),sent_counts.values), columns=["sentiment", "percentage"])
-    pie_fig = px.pie(data, values='percentage', names='sentiment', title='Normalised Sentiment Breakdown', hole=.5, width=500)
+    pie_fig = px.pie(data, 
+        values='percentage', 
+        names='sentiment', 
+        title='Normalised Sentiment Breakdown', 
+        hole=.5, 
+        width=500,
+        color='sentiment',
+        color_discrete_map={'negative':'orangered',
+                                 'positive':'lightgreen',
+                                 'neutral':'lightgrey'}
+    )
     pie_fig.update_layout(
         font_family="monospace"
     )
@@ -85,18 +96,22 @@ def display_click_data(clickData):
 
 @app.callback(
     Output('wordCloud', 'figure'),
-    [Input('pie-graph', 'clickData')])
-def display_click_data(clickData):
-    try:
+    [
+        Input('pie-graph', 'clickData'),
+        Input('wordCloud', 'clickData')
+    ],
+    prevent_initial_call=True)
+def update_pie_graph(clickData, points):
+    ctx = dash.callback_context
+    trigger = ctx.triggered[0]["prop_id"]
+    if "pie" in trigger:
         sentiment = clickData["points"][0]["label"]
-    except:
-        sentiment = None
-    if sentiment != None:
         df_sent = df.query(f'sentiment == "{sentiment}"')
         words = " ".join(df_sent.text.str.split(expand=True).stack())
         return get_word_cloud(words, title=sentiment)
-    return get_word_cloud(" ".join(df.text.str.split(expand=True).stack()))
-    
+    if "word" in trigger:
+        return get_word_cloud(" ".join(df.text.str.split(expand=True).stack()))
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
