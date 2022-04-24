@@ -52,25 +52,13 @@ def get_pie_chart(sents):
         hole=0.5,
         color="sentiment",
         color_discrete_map={
-            "negative": "orangered",
-            "positive": "limegreen",
-            "neutral": "blue",
-        },
+            "negative": "#ec8171",
+            "positive": "#00cc96",
+            "neutral": "#636efa",
+        }
     )
     pie_fig.update_layout(font_family="monospace")
     return pie_fig
-
-def get_stacked_sent_counts(df):
-    dates = pd.to_datetime(df.created_at, infer_datetime_format=True).to_numpy()
-    sents = df.sentiment
-    ds_df = pd.DataFrame(zip(dates,sents), columns=["date", "sentiment"])
-    grouped = ds_df.groupby(pd.Grouper(key="date", freq="H"))
-    grouped_count = pd.DataFrame(grouped['sentiment'].value_counts())
-    date_df = grouped['sentiment'].value_counts()
-    result = pd.DataFrame(zip( [x[0] for x in date_df.keys()],[x[1] for x in date_df.keys()], date_df), columns=["date", "sentiment", "count"])
-    fig = px.bar(result, x="date", y="count", color="sentiment", title="Hourly Tweet Count Histogram (stacked by sentiment)")
-    fig.update_layout(font_family="monospace")
-    return fig
 
 def get_word_cloud(text, title="mixed"):
     color_map = {
@@ -109,9 +97,9 @@ def get_geo_plot(df):
         hover_name="place",  # column added to hover information
         title="Scatter Geo Plot of some tweet sentiments (where location available)",
         color_discrete_map={
-            "negative": "orangered",
-            "positive": "limegreen",
-            "neutral": "blue",
+            "negative": "#ec8171",
+            "positive": "#00cc96",
+            "neutral": "#636efa",
         },
     )
     fig.update_layout(font_family="monospace")
@@ -171,7 +159,7 @@ def get_svm_lc(data):
     test_df["type"] = "validation"
     lc_df = pd.concat([train_df, test_df])
     fig = px.area(
-        lc_df, x="sizes", y="scores", color="type", title="SVM Accuracy Area Plot", markers=True
+        lc_df, x="sizes", y="scores", color="type", title="SVM Accuracy Stacked Area Plot", markers=True
     )
     fig.update_layout(font_family="monospace")
     return fig
@@ -239,6 +227,21 @@ def get_temporal_sum_data(df):
     fig.update_layout(font_family="monospace")
     return fig
 
+def get_stacked_sent_counts(df):
+    dates = pd.to_datetime(df.created_at, infer_datetime_format=True).to_numpy()
+    sents = df.sentiment
+    ds_df = pd.DataFrame(zip(dates,sents), columns=["date", "sentiment"])
+    grouped = ds_df.groupby(pd.Grouper(key="date", freq="H"))
+    grouped_count = pd.DataFrame(grouped['sentiment'].value_counts())
+    date_df = grouped['sentiment'].value_counts()
+    result = pd.DataFrame(zip( [x[0] for x in date_df.keys()],[x[1] for x in date_df.keys()], date_df), columns=["date", "sentiment", "count"])
+    fig = px.bar(result, x="date", y="count", color="sentiment", title="Hourly Tweet Count Histogram (stacked by sentiment)",color_discrete_map={
+            "negative": "#ec8171",
+            "positive": "#00cc96",
+            "neutral": "#636efa",
+        },)
+    fig.update_layout(font_family="monospace")
+    return fig
 
 def get_bar_plot(data, range):
     _, y_pred = data
@@ -257,9 +260,9 @@ def get_bar_plot(data, range):
         y="percentage",
         color="sentiment",
         color_discrete_map={
-            "negative": "orangered",
-            "positive": "limegreen",
-            "neutral": "blue",
+            "negative": "#ec8171",
+            "positive": "#00cc96",
+            "neutral": "#636efa",
         },
         title="SVM Predicted Sentiment Breakdown",
         text_auto='.2f'
@@ -281,9 +284,9 @@ def get_bar_plot_dnn(data, range):
         y="percentage",
         color="sentiment",
         color_discrete_map={
-            "negative": "orangered",
-            "positive": "limegreen",
-            "neutral": "blue",
+            "negative": "#ec8171",
+            "positive": "#00cc96",
+            "neutral": "#636efa",
         },
         title="DNN Predicted Sentiment Breakdown",
         text_auto='.2f'
@@ -368,26 +371,6 @@ app.layout = html.Div(
                         dbc.CardBody(
                             [
                                 dcc.Graph(
-                                    id="temporal",
-                                    figure=get_temporal_data(df),
-                                ),
-                            ]
-                        )
-                    ),
-                    width=10,
-                )
-            ],
-            justify="center",
-        ),
-        html.Br(),
-        html.Br(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                dcc.Graph(
                                     id="likes",
                                     figure=get_temporal_sum_data(df),
                                 ),
@@ -409,6 +392,25 @@ app.layout = html.Div(
                                 dcc.Graph(
                                     id="stacked",
                                     figure=get_stacked_sent_counts(df),
+                                ),
+                            ]
+                        )
+                    ),
+                    width=10,
+                )
+            ],
+            justify="center",
+        ),
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                dcc.Graph(
+                                    id="temporal",
+                                    figure=get_temporal_data(df),
                                 ),
                             ]
                         )
