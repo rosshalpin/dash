@@ -26,7 +26,7 @@ def get_pie_chart(df):
     pie_fig = px.pie(data, 
         values='percentage', 
         names='sentiment', 
-        title='Normalised Sentiment Breakdown', 
+        title='Normalised Sentiment Breakdown<br>(click to obtain Sentiment Word Cloud)', 
         hole=.5, 
         width=500,
         color='sentiment',
@@ -41,10 +41,17 @@ def get_pie_chart(df):
 
 
 def get_word_cloud(text, title="mixed"):
+    color_map = {
+        "negative": lambda *args, **kwargs: (231,15,15),
+        "neutral": lambda *args, **kwargs: (125,125,125),
+        "positive": lambda *args, **kwargs: (51,186,15),
+        "mixed": None
+    }
     fig = px.imshow(WordCloud(max_words=50,
         background_color="white",
+        color_func=color_map[title],
         scale=3
-        ).generate(text),title=f"Word Cloud for sentiment: {title}")
+        ).generate(text),title=f"Top 50 Word Cloud for sentiment: {title}<br>(click to reset)")
     fig.update_layout(
         showlegend=False,
         font_family="monospace"
@@ -63,7 +70,6 @@ app.layout = html.Div(children=[
     '''),
 
     html.Div(children='''
-        Clicking on the pie chart will update the word cloud for the top 50 words in that sentiment
     '''),
 
     dcc.Graph(
