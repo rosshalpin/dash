@@ -10,6 +10,10 @@ import pandas as pd
 from wordcloud import WordCloud
 from dash.dependencies import Input, Output
 import json
+import pickle
+from sklearn.metrics import confusion_matrix
+import numpy as np
+import plotly.figure_factory as ff
 
 app = Dash(__name__)
 
@@ -19,6 +23,16 @@ data_path=f"{path}/static/data/"
 
 
 df = pd.read_csv(data_path+"cleaned_tweets.csv")
+
+def load_pickled_data(file_name):
+    with open(f'{data_path}{file_name}.pickle', 'rb') as handle:
+        return pickle.load(handle)
+
+
+svm_lc = load_pickled_data('svm_lc')
+dnn = load_pickled_data('dnn')
+svm = load_pickled_data('svm')
+dnn_history = load_pickled_data('history')
 
 def get_pie_chart(df):
     sent_counts = df.sentiment.value_counts(normalize=True) * 100
@@ -52,6 +66,7 @@ def get_word_cloud(text, title="mixed"):
         color_func=color_map[title],
         scale=3,
         ).generate(text),
+
         title=f"Top 50 Word Cloud for sentiment: {title}<br>(click to reset)",
         binary_compression_level=0)
     fig.update_layout(
@@ -85,6 +100,52 @@ def get_geo_plot(df):
     return fig
 
 
+def get_confusion_matrix(data):
+    y_test, y_pred = data
+    cm = confusion_matrix(y_test, y_pred)
+    x = ["negative", "neutral", "positive"]
+    z_text = [[str(y) for y in x] for x in cm]
+    fig = ff.create_annotated_heatmap(cm, x=x, y=x, annotation_text=z_text, colorscale='Viridis')
+    # add custom xaxis title
+    fig.add_annotation(dict(font=dict(color="black",size=14),
+                            x=0.5,
+                            y=1.15,
+                            showarrow=False,
+                            text="Predicted value",
+                            xref="paper",
+                            yref="paper"))
+
+    # add custom yaxis title
+    fig.add_annotation(dict(font=dict(color="black",size=14),
+                            x=-0.21,
+                            y=0.5,
+                            showarrow=False,
+                            text="Real value",
+                            textangle=-90,
+                            xref="paper",
+                            yref="paper"))
+    fig.update_layout(
+        margin=dict(t=100, l=100),
+        font_family="monospace",
+        title="SVM Confusion Matrix"
+    )
+    return fig
+
+
+def get_svm_lc(data):
+    train_sizes, train_scores, test_scores, fit_times = data
+    train_scores_mean = np.mean(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    train_df = pd.DataFrame(zip(train_scores_mean, train_sizes), columns=["scores", "sizes"])
+    train_df['type'] = "train"
+    test_df = pd.DataFrame(zip(test_scores_mean, train_sizes), columns=["scores", "sizes"])
+    test_df['type'] = "validation"
+    lc_df = pd.concat([train_df,test_df])
+    fig = px.line(lc_df, x="sizes", y="scores",color='type', title='SVM Learning Curve Accuracy')
+    fig.update_layout(
+        font_family="monospace"
+    )
+    return fig
 
 app.layout = html.Div(children=[
     html.H1(children='Twitter data dashboard'),
@@ -96,25 +157,43 @@ app.layout = html.Div(children=[
     html.Div(children='''
     '''),
 
+    html.Br(),
+    html.H3(children='Input Data'),
+    html.Br(),
+
     html.Div([
         dcc.Graph(
             id='pie-graph',
             figure=get_pie_chart(df),
-            style={'width': '10md', 'height': '30md',"display": "inline-block","marginLeft": "10"}
+            style={'width': '33vw',"display": "inline-block"}
         ),
 
         dcc.Graph(
             id="wordCloud",
             figure=get_word_cloud(" ".join(df.text.str.split(expand=True).stack())),
-            style={"display": "inline-block","marginLeft": "10"}
+            style={'width': '33vw', "display": "inline-block"}
         ),
         dcc.Graph(
             id="geoPlot",
             figure=get_geo_plot(df),
-            style={"display": "inline-block"}
+            style={'width': '33vw', "display": "inline-block"}
         ),
     ]),
-    
+    html.Br(),
+    html.H3(children='SVM Performance'),
+    html.Br(),
+    html.Div([
+        dcc.Graph(
+            id='svm-lc',
+            figure=get_svm_lc(svm_lc),
+            style={'width': '33vw',"display": "inline-block"}
+        ),
+        dcc.Graph(
+            id='svm_cm',
+            figure=get_confusion_matrix(svm),
+            style={'width': '33vw',"display": "inline-block"}
+        ),
+    ]),
     html.Div([
         dcc.Markdown(("""
             **Click Data**

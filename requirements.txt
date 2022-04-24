@@ -4,3 +4,5 @@ numpy
 Werkzeug==2.0.3
 dash-bootstrap-components
 wordcloud
+keras
+sklearn
