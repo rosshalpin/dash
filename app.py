@@ -31,8 +31,8 @@ def get_pie_chart(df):
         width=500,
         color='sentiment',
         color_discrete_map={'negative':'orangered',
-                                 'positive':'lightgreen',
-                                 'neutral':'lightgrey'}
+                                 'positive':'limegreen',
+                                 'neutral':'blue'}
     )
     pie_fig.update_layout(
         font_family="monospace"
@@ -43,15 +43,17 @@ def get_pie_chart(df):
 def get_word_cloud(text, title="mixed"):
     color_map = {
         "negative": lambda *args, **kwargs: (231,15,15),
-        "neutral": lambda *args, **kwargs: (125,125,125),
+        "neutral": lambda *args, **kwargs: (35,76,255),
         "positive": lambda *args, **kwargs: (51,186,15),
         "mixed": None
     }
     fig = px.imshow(WordCloud(max_words=50,
         background_color="white",
         color_func=color_map[title],
-        scale=3
-        ).generate(text),title=f"Top 50 Word Cloud for sentiment: {title}<br>(click to reset)")
+        scale=3,
+        ).generate(text),
+        title=f"Top 50 Word Cloud for sentiment: {title}<br>(click to reset)",
+        binary_compression_level=0)
     fig.update_layout(
         showlegend=False,
         font_family="monospace"
@@ -60,6 +62,28 @@ def get_word_cloud(text, title="mixed"):
     fig.update_yaxes(visible=False)
     
     return fig
+
+
+def get_geo_plot(df):
+    coords = df.coords.str.split(expand=True, pat=',')
+    df_ = df.copy(deep=True)
+    df_['lat'] = coords[0]
+    df_['lon'] = coords[1]
+    fig = px.scatter_geo(
+            df_, lat='lat', lon='lon',
+            color="sentiment", # which column to use to set the color of markers
+            hover_name="place", # column added to hover information
+            projection="natural earth",
+            title='Scatter Geo Plot of some tweet sentiments',
+            color_discrete_map={'negative':'orangered',
+                                 'positive':'limegreen',
+                                 'neutral':'blue'},
+        )
+    fig.update_layout(
+        font_family="monospace"
+    )
+    return fig
+
 
 
 app.layout = html.Div(children=[
@@ -72,17 +96,25 @@ app.layout = html.Div(children=[
     html.Div(children='''
     '''),
 
-    dcc.Graph(
-        id='pie-graph',
-        figure=get_pie_chart(df),
-        style={'width': '10md', 'height': '30md',"display": "inline-block","marginLeft": "10"}
-    ),
+    html.Div([
+        dcc.Graph(
+            id='pie-graph',
+            figure=get_pie_chart(df),
+            style={'width': '10md', 'height': '30md',"display": "inline-block","marginLeft": "10"}
+        ),
 
-    dcc.Graph(
-        id="wordCloud",
-        figure=get_word_cloud(" ".join(df.text.str.split(expand=True).stack())),
-        style={"display": "inline-block","marginLeft": "10"}
-    ),
+        dcc.Graph(
+            id="wordCloud",
+            figure=get_word_cloud(" ".join(df.text.str.split(expand=True).stack())),
+            style={"display": "inline-block","marginLeft": "10"}
+        ),
+        dcc.Graph(
+            id="geoPlot",
+            figure=get_geo_plot(df),
+            style={"display": "inline-block"}
+        ),
+    ]),
+    
     html.Div([
         dcc.Markdown(("""
             **Click Data**
