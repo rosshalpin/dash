@@ -147,6 +147,43 @@ def get_svm_lc(data):
     )
     return fig
 
+def get_dnn_acc(data):
+    train_acc = pd.DataFrame(data['accuracy'], columns=["accuracy"])
+    val_acc = pd.DataFrame(data['val_accuracy'], columns=["accuracy"])
+    train_acc["type"] = "train"
+    val_acc["type"] = "validation"
+    acc_df =  pd.concat([train_acc,val_acc])
+    fig = px.line(
+        acc_df,
+        y="accuracy",
+        color="type",
+        title='DNN Learning Curve Accuracy'
+    )
+    fig.update_layout(
+        font_family="monospace"
+    )
+    fig.update_xaxes(title="epoch")
+    return fig
+
+def get_dnn_loss(data):
+    train_loss = pd.DataFrame(data['loss'], columns=["loss"])
+    val_loss = pd.DataFrame(data['val_loss'], columns=["loss"])
+    train_loss["type"] = "train"
+    val_loss["type"] = "validation"
+    acc_df =  pd.concat([train_loss,val_loss])
+    fig = px.line(
+        acc_df,
+        y="loss",
+        color="type",
+        title='DNN Learning Curve Loss'
+    )
+    fig.update_layout(
+        font_family="monospace"
+    )
+    fig.update_xaxes(title="epoch")
+    return fig
+
+
 app.layout = html.Div(children=[
     html.H1(children='Twitter data dashboard'),
 
@@ -191,6 +228,19 @@ app.layout = html.Div(children=[
         dcc.Graph(
             id='svm_cm',
             figure=get_confusion_matrix(svm),
+            style={'width': '33vw',"display": "inline-block"}
+        ),
+    ]),
+    html.Br(),
+    html.Div([
+        dcc.Graph(
+            id='dnn-acc',
+            figure=get_dnn_acc(dnn_history),
+            style={'width': '33vw',"display": "inline-block"}
+        ),
+        dcc.Graph(
+            id='dnn-loss',
+            figure=get_dnn_loss(dnn_history),
             style={'width': '33vw',"display": "inline-block"}
         ),
     ]),
