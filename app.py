@@ -60,6 +60,17 @@ def get_pie_chart(sents):
     pie_fig.update_layout(font_family="monospace")
     return pie_fig
 
+def get_stacked_sent_counts(df):
+    dates = pd.to_datetime(df.created_at, infer_datetime_format=True).to_numpy()
+    sents = df.sentiment
+    ds_df = pd.DataFrame(zip(dates,sents), columns=["date", "sentiment"])
+    grouped = ds_df.groupby(pd.Grouper(key="date", freq="H"))
+    grouped_count = pd.DataFrame(grouped['sentiment'].value_counts())
+    date_df = grouped['sentiment'].value_counts()
+    result = pd.DataFrame(zip( [x[0] for x in date_df.keys()],[x[1] for x in date_df.keys()], date_df), columns=["date", "sentiment", "count"])
+    fig = px.bar(result, x="date", y="count", color="sentiment", title="Hourly Tweet Count Histogram (stacked by sentiment)")
+    fig.update_layout(font_family="monospace")
+    return fig
 
 def get_word_cloud(text, title="mixed"):
     color_map = {
@@ -96,7 +107,7 @@ def get_geo_plot(df):
         lon="lon",
         color="sentiment",  # which column to use to set the color of markers
         hover_name="place",  # column added to hover information
-        title="Scatter Geo Plot of some tweet sentiments where available",
+        title="Scatter Geo Plot of some tweet sentiments (where location available)",
         color_discrete_map={
             "negative": "orangered",
             "positive": "limegreen",
@@ -104,7 +115,7 @@ def get_geo_plot(df):
         },
     )
     fig.update_layout(font_family="monospace")
-    fig.update_layout(height=600, margin={"r":0,"t":25,"l":0,"b":0})
+    fig.update_layout(height=500, margin={"r":0,"t":25,"l":0,"b":0})
     return fig
 
 
@@ -159,8 +170,8 @@ def get_svm_lc(data):
     )
     test_df["type"] = "validation"
     lc_df = pd.concat([train_df, test_df])
-    fig = px.line(
-        lc_df, x="sizes", y="scores", color="type", title="SVM Learning Curve Accuracy"
+    fig = px.area(
+        lc_df, x="sizes", y="scores", color="type", title="SVM Accuracy Area Plot", markers=True
     )
     fig.update_layout(font_family="monospace")
     return fig
@@ -173,7 +184,7 @@ def get_dnn_acc(data):
     val_acc["type"] = "validation"
     acc_df = pd.concat([train_acc, val_acc])
     fig = px.line(
-        acc_df, y="accuracy", color="type", title="DNN Learning Curve Accuracy"
+        acc_df, y="accuracy", color="type", title="DNN Learning Curve Accuracy", markers=True
     )
     fig.update_layout(font_family="monospace")
     fig.update_xaxes(title="epoch")
@@ -186,7 +197,7 @@ def get_dnn_loss(data):
     train_loss["type"] = "train"
     val_loss["type"] = "validation"
     acc_df = pd.concat([train_loss, val_loss])
-    fig = px.line(acc_df, y="loss", color="type", title="DNN Learning Curve Loss")
+    fig = px.line(acc_df, y="loss", color="type", title="DNN Learning Curve Loss", markers=True)
     fig.update_layout(font_family="monospace")
     fig.update_xaxes(title="epoch")
     return fig
@@ -216,13 +227,13 @@ def get_temporal_sum_data(df):
     group_df = date_df.groupby(pd.Grouper(key="date", freq="H"))
     group_df = group_df.size().reset_index(name="count")
     group_df.dropna(inplace=True)
-    fig = px.histogram(
+    fig = px.line(
         group_df,
         x=group_df.date,
         y="count",
         width=1600,
         title="Hourly Tweet Count",
-        nbins=int(group_df.size),
+        markers=True
     )
     fig.update_yaxes(title="count")
     fig.update_layout(font_family="monospace")
@@ -251,6 +262,7 @@ def get_bar_plot(data, range):
             "neutral": "blue",
         },
         title="SVM Predicted Sentiment Breakdown",
+        text_auto='.2f'
     )
     fig.update_yaxes(range=range)
     fig.update_layout(font_family="monospace")
@@ -274,6 +286,7 @@ def get_bar_plot_dnn(data, range):
             "neutral": "blue",
         },
         title="DNN Predicted Sentiment Breakdown",
+        text_auto='.2f'
     )
     fig.update_yaxes(range=range)
     fig.update_layout(font_family="monospace")
@@ -377,6 +390,25 @@ app.layout = html.Div(
                                 dcc.Graph(
                                     id="likes",
                                     figure=get_temporal_sum_data(df),
+                                ),
+                            ]
+                        )
+                    ),
+                    width=10,
+                )
+            ],
+            justify="center",
+        ),
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                dcc.Graph(
+                                    id="stacked",
+                                    figure=get_stacked_sent_counts(df),
                                 ),
                             ]
                         )
